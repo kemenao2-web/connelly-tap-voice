@@ -1,49 +1,65 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>コネリータップボイス</title>
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      background: #f6f6f6;
-    }
-    .wrap { text-align: center; padding: 24px; }
-    #dog {
-      width: min(320px, 80vw);
-      height: auto;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.12);
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .hint { margin-top: 14px; color: #444; font-size: 16px; }
-    .small { margin-top: 6px; color: #777; font-size: 13px; }
+    html,body{height:100%;margin:0}
+    body{display:flex;align-items:center;justify-content:center;background:#111;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto}
+    #wrap{width:min(520px,92vw);text-align:center}
+    #imgBtn{width:100%;border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.45);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+    #hint{margin:12px 0 0;font-size:14px;opacity:.9}
+    #status{margin:6px 0 0;font-size:12px;opacity:.75;min-height:1.2em}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- ここをあとで「コネリー画像ファイル名」に差し替えます -->
-    <img id="dog" src="connelly.png" alt="コネリーちゃん" />
-    <div class="hint">コネリーをタップしてね</div>
-    <div class="small">（まずは画像表示の確認中）</div>
+  <div id="wrap">
+    <!-- ここを自分の画像ファイル名に変える（例: conery.png） -->
+    <img id="imgBtn" src="conery.png" alt="コネリー" />
+    <div id="hint">タップして声が鳴るよ</div>
+    <div id="status"></div>
   </div>
 
   <script>
-    // いまは動作テスト用：タップしたら文字が変わるだけ
-    const dog = document.getElementById("dog");
-    const hint = document.querySelector(".hint");
+    // ここを自分の音声ファイル名に変える（例: nao1.m4a / nao2.m4a / nao3.m4a）
+    const sounds = ["voice1.m4a","voice2.m4a","voice3.m4a"];
 
-    dog.addEventListener("click", () => {
-      hint.textContent = "タップできた！次は音声を入れるよ";
-    });
+    const img = document.getElementById("imgBtn");
+    const statusEl = document.getElementById("status");
+
+    let busy = false;
+    let audio = null;
+
+    function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+    async function playOne(){
+      if (busy) return;
+      busy = true;
+      statusEl.textContent = "再生中…";
+
+      try{
+        const file = pick(sounds);
+        if (audio) { audio.pause(); audio.currentTime = 0; }
+        audio = new Audio(file);
+        audio.preload = "auto";
+
+        // iPhone対策：ユーザー操作内で再生開始
+        await audio.play();
+
+        audio.onended = () => {
+          busy = false;
+          statusEl.textContent = "";
+        };
+      } catch(e){
+        busy = false;
+        statusEl.textContent = "音声が見つからない/再生できないかも";
+      }
+    }
+
+    // クリック/タップ両対応
+    img.addEventListener("click", playOne, { passive:true });
+    img.addEventListener("touchend", (e)=>{ e.preventDefault(); playOne(); }, { passive:false });
   </script>
 </body>
 </html>
